@@ -1,0 +1,6 @@
+This is a shared file in a shared folder.
+
+Please create a folder called 'data' at the base of the main directory.
+In this folder we can share all the little sized files, instead in data we can have all the big files.
+
+'data' folder is already been added to the gitignore
