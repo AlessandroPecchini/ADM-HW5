@@ -43,12 +43,17 @@ def filter_dataframe_dates(df, date_range=None):
         -------
             The filtered dataframe
     '''
-
-    if date_range is not None and (type(date_range) != tuple or len(date_range)!=2):
+    if date_range is None:
+        return df
+    dataframes = []
+    for dr in date_range:
+        if dr is not None and (type(dr) != tuple or len(dr)!=2):
             raise ValueError(f"You must pass a range of timestamp in the form: (min_ts, max_ts), not {date_range}")
-    if type(date_range[0]) == str:
-        date_range = tuple(map(lambda t: int(datetime.strptime(t, '%Y-%m-%d').timestamp()), date_range))
-    return df[df.time.isin(range(*date_range))] if date_range is not None else df
+        if dr is not None and type(dr[0]) == str:
+            dr = tuple(map(lambda t: int(datetime.strptime(t, '%Y-%m-%d').timestamp()), dr))
+        if dr is not None:
+            dataframes.append(df[df.time.isin(range(*dr))])
+    return pd.concat(dataframes, ignore_index=True).drop_duplicates().reset_index(drop=True)
 
 
 def time_to_weight(df):
@@ -116,7 +121,11 @@ def get_graph_from_df(df, date_range=None):
         -------
             The dictionary of the obtained graph
     '''
-    df = filter_dataframe_dates(df, date_range)
+    if date_range is not None and type(date_range) != list:
+        df = filter_dataframe_dates(df, [date_range])
+    else:
+        df = filter_dataframe_dates(df, date_range)
+    
     return get_graph_from_weighted_df(time_to_weight(df))
 
 
@@ -141,7 +150,10 @@ def get_single_graph(fpath, date_range=None):
     print(f"done in {round(time()-start,3)}s")
     start = time()
     print("Retrieving the graph...")
-    ret = MyGraph(time_to_weight(filter_dataframe_dates(df, date_range)))
+    if date_range is not None and type(date_range)!=list:
+        ret = MyGraph(time_to_weight(filter_dataframe_dates(df, [date_range])))
+    else:
+        ret = MyGraph(time_to_weight(filter_dataframe_dates(df, date_range)))
     print(f"done in {round(time()-start,3)}s")
     return ret
 
@@ -191,9 +203,14 @@ def get_global_graph(fpaths, date_range=None, coefficients=None):
 
     start = time()
     print(f"filtering the dataframes...")
-    a2q = filter_dataframe_dates(a2q, date_range)
-    c2a = filter_dataframe_dates(c2a, date_range)
-    c2q = filter_dataframe_dates(c2q, date_range)
+    if date_range is not None and type(date_range)!=list:
+        a2q = filter_dataframe_dates(a2q, [date_range])
+        c2a = filter_dataframe_dates(c2a, [date_range])
+        c2q = filter_dataframe_dates(c2q, [date_range])
+    else:
+        a2q = filter_dataframe_dates(a2q, date_range)
+        c2a = filter_dataframe_dates(c2a, date_range)
+        c2q = filter_dataframe_dates(c2q, date_range)
     print(f"done in {round(time()-start, 3)}s")
 
     start = time()
